@@ -1,0 +1,353 @@
+CREATE TABLE DEPARTMENT (
+    DEPARTMENT_ID INT PRIMARY KEY,
+    DEPARTMENT_NAME VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE EMPLOYEE (
+    EMP_ID INT PRIMARY KEY,
+    FIRST_NAME VARCHAR(100) NOT NULL,
+    LAST_NAME VARCHAR(100) NOT NULL,
+    DOB DATE NOT NULL,
+    GENDER VARCHAR(10),
+    DEPARTMENT_ID INT,
+    FOREIGN KEY (DEPARTMENT_ID) REFERENCES DEPARTMENT(DEPARTMENT_ID)
+);
+INSERT INTO DEPARTMENT (DEPARTMENT_ID, DEPARTMENT_NAME) VALUES
+(1, 'HR'),
+(2, 'Finance'),
+(3, 'Engineering'),
+(4, 'Sales'),
+(5, 'Marketing'),
+(6, 'IT');
+
+INSERT INTO EMPLOYEE (EMP_ID, FIRST_NAME, LAST_NAME, DOB, GENDER, DEPARTMENT_ID) VALUES
+(1, 'John',   'Williams',  '1980-05-15', 'Male',   3),
+(2, 'Sarah',  'Johnson',   '1990-07-20', 'Female', 2),
+(3, 'Michael','Smith',     '1985-02-10', 'Male',   3),
+(4, 'Emily',  'Brown',     '1992-11-30', 'Female', 4),
+(5, 'David',  'Jones',     '1988-09-05', 'Male',   5),
+(6, 'Olivia', 'Davis',     '1995-04-12', 'Female', 1),
+(7, 'James',  'Wilson',    '1983-03-25', 'Male',   6),
+(8, 'Sophia', 'Anderson',  '1991-08-17', 'Female', 4),
+(9, 'Liam',   'Miller',    '1979-12-01', 'Male',   1),
+(10,'Emma',   'Taylor',    '1993-06-28', 'Female', 5);
+
+SELECT 
+    E1.EMP_ID,
+    E1.FIRST_NAME,
+    E1.LAST_NAME,
+    D.DEPARTMENT_NAME,
+    COUNT(E2.EMP_ID) AS YOUNGER_EMPLOYEES_COUNT
+FROM EMPLOYEE E1
+JOIN DEPARTMENT D 
+    ON E1.DEPARTMENT_ID = D.DEPARTMENT_ID
+LEFT JOIN EMPLOYEE E2 
+    ON E1.DEPARTMENT_ID = E2.DEPARTMENT_ID
+   AND E2.DOB > E1.DOB
+GROUP BY 
+    E1.EMP_ID, 
+    E1.FIRST_NAME, 
+    E1.LAST_NAME, 
+    D.DEPARTMENT_NAME
+ORDER BY 
+    E1.EMP_ID DESC;
+
+
+package com.example.bajajqualifier;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+
+
+package com.example.bajajqualifier;
+
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+@Component
+public class StartupRunner implements ApplicationRunner {
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        RestTemplate rest = new RestTemplate();
+
+        // Step 1: Call Generate Webhook API
+        String reqJson = """
+            {"name":"Your Name","regNo":"REG12347","email":"you@example.com"}
+            """;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(reqJson, headers);
+
+        ResponseEntity<String> response = rest.postForEntity(
+                "https://bfhldevapigw.healthrx.co.in/hiring/generateWebhook/JAVA",
+                entity,
+                String.class
+        );
+        System.out.println("Generate Webhook Response: " + response.getBody());
+
+        // 👉 Parse response manually (or use Jackson) to extract webhook + token
+        // For simplicity, assume we copy token/webhook from console log first time
+
+        String webhookUrl = "https://bfhldevapigw.healthrx.co.in/hiring/testWebhook/JAVA";
+        String accessToken = "PUT_TOKEN_HERE"; // extract from first API
+
+        // Step 2: Pick SQL file (odd/even regNo)
+        String sql = Files.readString(Paths.get("solution_q1.sql")); // or q2.sql
+
+        // Step 3: Send SQL to webhook
+        headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", accessToken);
+
+        String sqlJson = "{\"finalQuery\":\"" + sql.replace("\"", "\\\"") + "\"}";
+        entity = new HttpEntity<>(sqlJson, headers);
+
+        ResponseEntity<String> submitResp = rest.postForEntity(webhookUrl, entity, String.class);
+        System.out.println("Submit Response: " + submitResp.getBody());
+    }
+}
+
+
+<dependencies>
+  <!-- Choose ONE stack; here: WebFlux + WebClient -->
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-webflux</artifactId>
+  </dependency>
+
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+  </dependency>
+
+  <dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+    <scope>runtime</scope>
+  </dependency>
+
+  <dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <optional>true</optional>
+  </dependency>
+
+  <dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+  </dependency>
+
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+  </dependency>
+</dependencies>
+
+
+app:
+  candidate:
+    name: "Gadala Tejaswi"
+    regNo: "22BCE20122"
+    email: "tejaaa2004@gmail.com"
+  sql:
+    # Put your final SQL in these files (decide based on odd/even)
+    evenFile: "classpath:sql/solution_q2.sql"
+
+
+package com.yourname.bajajqualifier.api;
+
+public record GenerateWebhookRequest(String tejaswi, String 22bce20122, String tejaaa2004@gmail.com) {}
+
+
+package com.tejaswi.bajajqualifier.api;
+
+public record GenerateWebhookResponse(String webhook, String accessToken) {}
+
+
+package com.tejaswi.bajajqualifier.api;
+
+public record FinalQueryPayload(String finalQuery) {}
+
+
+package com.tejaswi.bajajqualifier.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Configuration
+public class WebClientConfig {
+  @Bean
+  WebClient webClient() {
+    return WebClient.builder().build();
+  }
+}
+
+
+package com.tejaswi.bajajqualifier.service;
+
+import com.tejaswi.bajajqualifier.api.*;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+@Service
+public class HiringClient {
+  private final WebClient webClient;
+
+  public HiringClient(WebClient webClient) {
+    this.webClient = webClient;
+  }
+
+  public GenerateWebhookResponse generateWebhook(GenerateWebhookRequest req) {
+    return webClient.post()
+        .uri("https://bfhldevapigw.healthrx.co.in/hiring/generateWebhook/JAVA")
+        .contentType(MediaType.APPLICATION_JSON)
+        .bodyValue(req)
+        .retrieve()
+        .bodyToMono(GenerateWebhookResponse.class)
+        .block();
+  }
+
+  public void submitFinalQuery(String webhookUrlOrFixed, String accessToken, String finalSql) {
+    webClient.post()
+        .uri(webhookUrlOrFixed) // If response gave a specific URL, use it; else use fixed from paper
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(h -> h.set("Authorization", accessToken)) // start without "Bearer "
+        .bodyValue(new FinalQueryPayload(finalSql))
+        .retrieve()
+        .toBodilessEntity()
+        .onErrorResume(err -> {
+          // Retry once with Bearer if unauthorized
+          return webClient.post()
+              .uri(webhookUrlOrFixed)
+              .contentType(MediaType.APPLICATION_JSON)
+              .headers(h -> h.set("Authorization", "Bearer " + accessToken))
+              .bodyValue(new FinalQueryPayload(finalSql))
+              .retrieve()
+              .toBodilessEntity();
+        })
+        .block();
+  }
+}
+// com.yourname.bajajqualifier.util.SqlLoader.java
+package com.yourname.bajajqualifier.util;
+
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+
+@Component
+public class SqlLoader {
+  private final ResourceLoader resourceLoader;
+
+  public SqlLoader(ResourceLoader resourceLoader) {
+    this.resourceLoader = resourceLoader;
+  }
+
+  public String loadSql(String location) {
+    try {
+      Resource resource = resourceLoader.getResource(location);
+      return Files.readString(resource.getFile().toPath(), StandardCharsets.UTF_8).trim();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to read SQL file: " + location, e);
+    }
+  }
+}
+// com.yourname.bajajqualifier.util.RegNoUtil.java
+package com.yourname.bajajqualifier.util;
+
+public class RegNoUtil {
+  public static boolean lastTwoDigitsAreOdd(String regNo) {
+    String digits = regNo.replaceAll("\\D+", "");
+    int n = Integer.parseInt(digits.substring(digits.length() - 2));
+    return n % 2 != 0;
+  }
+}
+// com.yourname.bajajqualifier.App.java
+package com.yourname.bajajqualifier;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class App {
+  public static void main(String[] args) {
+    SpringApplication.run(App.class, args);
+  }
+}
+// com.yourname.bajajqualifier.BootRunner.java
+package com.yourname.bajajqualifier;
+
+import com.yourname.bajajqualifier.api.GenerateWebhookRequest;
+import com.yourname.bajajqualifier.api.GenerateWebhookResponse;
+import com.yourname.bajajqualifier.service.HiringClient;
+import com.yourname.bajajqualifier.util.RegNoUtil;
+import com.yourname.bajajqualifier.util.SqlLoader;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.stereotype.Component;
+
+@Component
+public class BootRunner implements ApplicationRunner {
+
+  private final HiringClient client;
+  private final SqlLoader sqlLoader;
+
+  @Value("${app.candidate.name}")  private String name;
+  @Value("${app.candidate.regNo}") private String regNo;
+  @Value("${app.candidate.email}") private String email;
+
+  @Value("${app.sql.oddFile}")  private String oddFile;
+  @Value("${app.sql.evenFile}") private String evenFile;
+
+  public BootRunner(HiringClient client, SqlLoader sqlLoader) {
+    this.client = client;
+    this.sqlLoader = sqlLoader;
+  }
+
+  @Override
+  public void run(ApplicationArguments args) {
+    // 1) Generate webhook + accessToken
+    GenerateWebhookResponse resp = client.generateWebhook(
+        new GenerateWebhookRequest(name, regNo, email)
+    ); // From paper Step 1 & 2 :contentReference[oaicite:13]{index=13}
+
+    // 2) Decide which SQL to load
+    String sqlPath = RegNoUtil.lastTwoDigitsAreOdd(regNo) ? oddFile : evenFile; // From paper Step 3 :contentReference[oaicite:14]{index=14}
+    String finalSql = sqlLoader.loadSql(sqlPath);
+
+    // 3) Submit final SQL query to webhook with JWT in Authorization header
+    String webhook = (resp.webhook() != null && !resp.webhook().isBlank())
+        ? resp.webhook()
+        : "https://bfhldevapigw.healthrx.co.in/hiring/testWebhook/JAVA"; // From paper Step 4 :contentReference[oaicite:15]{index=15}
+
+    client.submitFinalQuery(webhook, resp.accessToken(), finalSql); // From paper Requirements :contentReference[oaicite:16]{index=16}
+  }
+}
+CREATE TABLE IF NOT EXISTS submitted_query(
+  id INT PRIMARY KEY,
+  sql_text CLOB
+);
+
